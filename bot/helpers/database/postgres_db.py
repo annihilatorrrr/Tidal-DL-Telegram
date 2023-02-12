@@ -18,11 +18,7 @@ class DataBaseHandle:
 
         self._dburl = dburl
 
-        if isinstance(self._dburl, bool):
-            self._block = True
-        else:
-            self._block = False
-
+        self._block = isinstance(self._dburl, bool)
         if self._block:
             return
 
@@ -45,7 +41,7 @@ class DataBaseHandle:
         """
 
         cur = None
-        for i in range(0, 5):
+        for i in range(5):
             try:
                 if dictcur:
                     cur = self._conn.cursor(

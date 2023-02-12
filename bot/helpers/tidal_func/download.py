@@ -46,11 +46,11 @@ def __parseContributors__(roleType, Contributors):
     if Contributors is None:
         return None
     try:
-        ret = []
-        for item in Contributors['items']:
-            if item['role'] == roleType:
-                ret.append(item['name'])
-        return ret
+        return [
+            item['name']
+            for item in Contributors['items']
+            if item['role'] == roleType
+        ]
     except:
         return None
 
@@ -60,7 +60,7 @@ def __setMetaData__(track: Track, album: Album, filepath, contributors, lyrics):
     obj.album = track.album.title
     obj.title = track.title
     if not aigpy.string.isNull(track.version):
-        obj.title += ' (' + track.version + ')'
+        obj.title += f' ({track.version})'
 
     obj.artist = list(map(lambda artist: artist.name, track.artists))
     obj.copyright = track.copyRight
@@ -79,7 +79,7 @@ def __setMetaData__(track: Track, album: Album, filepath, contributors, lyrics):
     obj.save(coverpath)
 
 async def downloadThumb(album, r_id):
-    path = Config.DOWNLOAD_BASE_DIR + f"/thumb/{r_id}.jpg"
+    path = f"{Config.DOWNLOAD_BASE_DIR}/thumb/{r_id}.jpg"
     url = TIDAL_API.getCoverUrl(album.cover, "80", "80")
     try:
         aigpy.net.downloadFile(url, path)
@@ -88,7 +88,7 @@ async def downloadThumb(album, r_id):
     return path
 
 async def postCover(album, bot, c_id, r_id):
-    album_art_path = Config.DOWNLOAD_BASE_DIR + f"/thumb/{r_id}-ALBUM.jpg"
+    album_art_path = f"{Config.DOWNLOAD_BASE_DIR}/thumb/{r_id}-ALBUM.jpg"
     album_art = TIDAL_API.getCoverUrl(album.cover, "1280", "1280")
     if album_art is not None:
         aigpy.net.downloadFile(album_art, album_art_path)
@@ -117,10 +117,10 @@ async def postCover(album, bot, c_id, r_id):
 def downloadAlbumInfo(album, tracks):
     if album is None:
         return
-    
+
     path = getAlbumPath(album)
     aigpy.path.mkdirs(path)
-    
+
     path += '/AlbumInfo.txt'
     infos = ""
     infos += "[ID]          %s\n" % (str(album.id))
@@ -131,7 +131,7 @@ def downloadAlbumInfo(album, tracks):
     infos += "[Duration]    %s\n" % (str(album.duration))
     infos += '\n'
 
-    for index in range(0, album.numberOfVolumes):
+    for index in range(album.numberOfVolumes):
         volumeNumber = index + 1
         infos += f"===========CD {volumeNumber}=============\n"
         for item in tracks:
@@ -160,7 +160,7 @@ async def downloadTrack(track: Track, album=None, playlist=None, userProgress=No
         # download
         #logging.info("[DL Track] name=" + aigpy.path.getFileName(path) + "\nurl=" + stream.url)
 
-        tool = aigpy.download.DownloadTool(path + '.part', [stream.url])
+        tool = aigpy.download.DownloadTool(f'{path}.part', [stream.url])
         tool.setUserProgress(userProgress)
         tool.setPartSize(partSize)
         check, err = tool.start(SETTINGS.showProgress)
@@ -169,7 +169,7 @@ async def downloadTrack(track: Track, album=None, playlist=None, userProgress=No
             return False, str(err)
 
         # encrypted -> decrypt and remove encrypted file
-        __encrypted__(stream, path + '.part', path)
+        __encrypted__(stream, f'{path}.part', path)
 
         # contributors
         try:
@@ -209,7 +209,7 @@ async def downloadTrack(track: Track, album=None, playlist=None, userProgress=No
         os.remove(thumb)
         os.remove(path)
 
-        LOGGER.info("Succesfully Downloaded " + track.title)
+        LOGGER.info(f"Succesfully Downloaded {track.title}")
         return True, ''
     except Exception as e:
         LOGGER.warning(f"DL Track[{track.title}] failed.{str(e)}")
